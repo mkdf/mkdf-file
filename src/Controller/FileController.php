@@ -30,7 +30,6 @@ class FileController extends AbstractActionController
         $id = (int) $this->params()->fromRoute('id', 0);
         //FIXME - Also make sure this is a file dataset that we are retrieving.
         $dataset = $this->_dataset_repository->findDataset($id);
-        //$permissions = $this->_repository->findDatasetPermissions($id);
         $message = "Dataset: " . $id;
         $actions = [];
         $can_view = $this->_permissionManager->canView($dataset,$user_id);
