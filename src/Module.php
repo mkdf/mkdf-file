@@ -1,8 +1,5 @@
 <?php
-
-
 namespace MKDF\File;
-
 
 use MKDF\Datasets\Service\DatasetsFeatureManagerInterface;
 use MKDF\File\Feature\FileFeature;

@@ -25,13 +25,13 @@ class FileFeature implements DatasetsFeatureInterface
         return 'details';
     }
     public function getEditAction(){
-        return 'index';
+        return 'upload';
     }
     public function getViewHref($id){
         return '/dataset/file/details/'.$id;
     }
     public function getEditHref($id){
-        return '/dataset/file/details/'.$id;
+        return '/dataset/file/upload/'.$id;
     }
     public function hasFeature($id){
         // Make a DB call for this dataset to see if it's a stream dataset

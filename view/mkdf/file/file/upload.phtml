@@ -1,0 +1,61 @@
+<h1><?= $dataset->title ?></h1>
+<div class="container">
+    <div class="row">
+        <div class="col-md-3">
+            <?= $this->partial('mkdf/datasets/partial/dataset-features', ['features' => $features, 'dataset_id' => $dataset->id] ) ?>
+        </div>
+        <div class="col-md-9">
+            <h2>File upload</h2>
+            <?php
+            $form = $this->form;
+
+            $form->get('title')->setAttributes([
+                'class'=>'form-control',
+                'placeholder'=>'File title'
+            ]);
+
+            $form->get('description')->setAttributes([
+                'class'=>'form-control',
+                'placeholder'=>'File description'
+            ]);
+
+            $form->get('data-file')->setAttributes([
+                'class'=>'custom-file-input',
+                'placeholder'=>'File upload'
+            ]);
+            $form->get('data-file')->setOptions([
+                'label_attributes' => array(
+                    'class' => 'custom-file-label',
+                ),
+            ]);
+
+            $form->get('upload')->setAttributes(['class'=>'btn btn-primary']);
+
+            $form->prepare();
+            ?>
+
+            <?= $this->form()->openTag($form); ?>
+            <div class="form-group">
+                <?= $this->formLabel($form->get('title')); ?>
+                <?= $this->formElement($form->get('title')); ?>
+                <?= $this->formElementErrors($form->get('title')); ?>
+            </div>
+            <div class="form-group">
+                <?= $this->formLabel($form->get('description')); ?>
+                <?= $this->formElement($form->get('description')); ?>
+                <?= $this->formElementErrors($form->get('description')); ?>
+            </div>
+
+            <div class="form-group custom-file">
+                <?= $this->formLabel($form->get('data-file')) ?>
+                <?= $this->formFile($form->get('data-file')) ?>
+                <?= $this->formElementErrors($form->get('data-file')) ?>
+            </div>
+
+            <div class="form-group">
+                <?= $this->formElement($form->get('upload')); ?>
+            </div>
+            <?= $this->form()->closeTag(); ?>
+        </div>
+    </div>
+</div>
