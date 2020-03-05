@@ -174,7 +174,6 @@ class FileController extends AbstractActionController
             $this->flashMessenger()->addErrorMessage('Unauthorised to read fiels from this dataset.');
             return $this->redirect()->toRoute('file', ['action'=>'details', 'id' => $dataset->id]);
         }
-
     }
 
 }

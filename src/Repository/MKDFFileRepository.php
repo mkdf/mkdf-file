@@ -64,6 +64,14 @@ class MKDFFileRepository implements MKDFFileRepositoryInterface
         return $this->_queries[$query];
     }
 
+    private function _formatBytes($size, $precision = 2)
+    {
+        $base = log($size, 1024);
+        $suffixes = array('b', 'kb', 'mb', 'gb', 'tb');
+
+        return round(pow(1024, $base - floor($base)), $precision) .''. $suffixes[floor($base)];
+    }
+
     public function findDatasetFiles ($datasetId) {
         $files = [];
         $parameters = [
@@ -75,6 +83,7 @@ class MKDFFileRepository implements MKDFFileRepositoryInterface
             $resultSet = new ResultSet;
             $resultSet->initialize($result);
             foreach ($resultSet as $row) {
+                $row['file_size_str'] = $this->_formatBytes((int)$row['file_size'],1);
                 array_push($files, $row);
             }
         }

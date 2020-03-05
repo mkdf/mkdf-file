@@ -29,7 +29,7 @@
                             <td><?= $this->escapeHtml($f['description']) ?></td>
                             <td><?= $this->escapeHtml($f['filename_original']) ?></td>
                             <td><?= $this->escapeHtml($f['file_type']) ?></td>
-                            <td><?= $this->escapeHtml($f['file_size']) ?></td>
+                            <td><?= $this->escapeHtml($f['file_size_str']) ?></td>
                             <td><a href="<?= $this->url('file', ['action' => 'download', 'id' => $f['id']]) ?>"><i class="fas fa-download"></i></a></td>
                         </tr>
                     <?php endforeach; ?>
