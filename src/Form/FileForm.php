@@ -3,6 +3,7 @@ namespace MKDF\File\Form;
 
 use MKDF\File\Repository\MKDFFileRepositoryInterface;
 use Zend\Form\Form;
+use Zend\InputFilter;
 use Zend\Form\Element\Hidden;
 use Zend\Form\Element\File;
 use Zend\Form\Element\Text;
@@ -121,6 +122,18 @@ class FileForm extends Form
             ],
         ]);
 
+        // File Input
+        $fileInput = new InputFilter\FileInput('data-file');
+        $fileInput->setRequired(true);
+        $fileInput->getFilterChain()->attachByName(
+            'filerenameupload',
+            [
+                'target'    => './data/tmpuploads/upload',
+                'randomize' => true,
+            ]
+        );
+        $inputFilter->add($fileInput);
 
+        $this->setInputFilter($inputFilter);
     }
 }

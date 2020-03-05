@@ -3,12 +3,15 @@ namespace MKDF\File\Repository;
 
 
 use Zend\Db\Adapter\Adapter;
+use Zend\Db\Adapter\Driver\ResultInterface;
+use Zend\Db\ResultSet\ResultSet;
 
 class MKDFFileRepository implements MKDFFileRepositoryInterface
 {
     private $_config;
     private $_adapter;
     private $_queries;
+    private $_uploadDestination;
 
     public function __construct($config)
     {
@@ -22,6 +25,7 @@ class MKDFFileRepository implements MKDFFileRepositoryInterface
             'port'     => $this->_config['db']['port']
         ]);
         $this->buildQueries();
+        $this->_uploadDestination = $this->_config['mkdf-file']['destination'];
     }
 
     private function fp($param) {
@@ -32,6 +36,91 @@ class MKDFFileRepository implements MKDFFileRepositoryInterface
     }
     private function buildQueries()
     {
-        $this->_queries = [];
+        $this->_queries = [
+            'isReady'           => 'SELECT id FROM file LIMIT 1',
+            'findDatasetFiles'  => 'SELECT id, title, description, dataset_id, filename, filename_original, file_type, file_size, date_created, date_modified '.
+                'FROM file '.
+                'WHERE dataset_id = '.$this->fp('dataset_id'),
+            'findFile'  => 'SELECT id, title, description, dataset_id, filename, filename_original, file_type, file_size, date_created, date_modified '.
+                'FROM file '.
+                'WHERE id = '.$this->fp('id'),
+            'insertFile'     => 'INSERT INTO file ('.
+                'title, description, dataset_id, filename, filename_original, file_type, file_size, date_created, date_modified'.
+                ') VALUES ('.
+                $this->fp('title').', '.
+                $this->fp('description').', '.
+                $this->fp('dataset_id').', '.
+                $this->fp('filename').', '.
+                $this->fp('filename_original').', '.
+                $this->fp('file_type').', '.
+                $this->fp('file_size').', '.
+                'CURRENT_TIMESTAMP, '.
+                'CURRENT_TIMESTAMP'.
+            ')',
+        ];
+    }
+
+    private function getQuery($query){
+        return $this->_queries[$query];
+    }
+
+    public function findDatasetFiles ($datasetId) {
+        $files = [];
+        $parameters = [
+            'dataset_id' => $datasetId
+        ];
+        $statement = $this->_adapter->createStatement($this->getQuery('findDatasetFiles'));
+        $result = $statement->execute($parameters);
+        if ($result instanceof ResultInterface && $result->isQueryResult()) {
+            $resultSet = new ResultSet;
+            $resultSet->initialize($result);
+            foreach ($resultSet as $row) {
+                array_push($files, $row);
+            }
+        }
+        return $files;
+    }
+
+    public function createFileEntry($formData, $dataset){
+        //print_r($formData);
+        //print_r($dataset);
+        $destination = $this->_uploadDestination . $dataset->uuid . "/";
+        //keep random upload fiename. Original filename will be stored in DB for use when
+        //file is downloaded
+        $filename = basename($formData['data-file']['tmp_name']);
+
+        if (!file_exists($destination)) {
+            mkdir($destination, 0777, true);
+        }
+        rename ($formData['data-file']['tmp_name'],$destination.$filename);
+
+        //update DB
+        $parameters = [
+            'title'             => $formData['title'],
+            'description'       => $formData['description'],
+            'dataset_id'        => $dataset->id,
+            'filename'          => $filename,
+            'filename_original' => $formData['data-file']['name'],
+            'file_type'         => $formData['data-file']['type'],
+            'file_size'         => $formData['data-file']['size']
+        ];
+        $statement = $this->_adapter->createStatement($this->getQuery('insertFile'));
+        $statement->execute($parameters);
+        $id = $this->_adapter->getDriver()->getLastGeneratedValue();
+        return $id;
+    }
+
+    public function findFile($id){
+        $parameters = [
+            'id' => $id
+        ];
+        $f = null;
+        $statement = $this->_adapter->createStatement($this->getQuery('findFile'));
+        $result = $statement->execute($parameters);
+        if ($result instanceof ResultInterface && $result->isQueryResult()) {
+            $f = $result->current();
+            $f['location'] = $this->_uploadDestination;
+        }
+        return $f;
     }
 }

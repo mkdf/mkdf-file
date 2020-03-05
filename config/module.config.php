@@ -79,4 +79,10 @@ return [
         //    ],
         //],
     ],
+    //
+    //Uploaded files will be stored here (within subdirectories that mirror  parentdataset UUID
+    //
+    'mkdf-file' => [
+        'destination' => './data/mkdf-files/',
+    ]
 ];
