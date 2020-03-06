@@ -10,7 +10,7 @@
             <!--
             UUID: <?= $dataset->uuid ?><br />
             -->
-            <?php if ($can_read):?>
+            <?php if ($can_view):?>
                 <table class="table table-striped table-bordered">
                     <tr>
 
@@ -19,7 +19,7 @@
                         <th>Filename</th>
                         <th>Type</th>
                         <th>Size</th>
-                        <th></th>
+                        <th>Actions</th>
 
 
                     </tr>
@@ -30,7 +30,29 @@
                             <td><?= $this->escapeHtml($f['filename_original']) ?></td>
                             <td><?= $this->escapeHtml($f['file_type']) ?></td>
                             <td><?= $this->escapeHtml($f['file_size_str']) ?></td>
-                            <td><a href="<?= $this->url('file', ['action' => 'download', 'id' => $f['id']]) ?>"><i class="fas fa-download"></i></a></td>
+                            <td class="text-nowrap">
+                                <?php
+                                if ($can_read) {
+                                    $downloadFileAction = [
+                                        'class'=>'btn-group-sm',
+                                        'buttons'=>[
+                                            ['type'=>'primary','label'=>'', 'icon' => 'download', 'target'=> 'file', 'params'=> ['id' => $f['id'], 'action' => 'download']],
+                                        ]
+                                    ];
+                                    print($this->partial('mkdf/core/partial/actions', $downloadFileAction));
+                                }
+                                if ($can_edit) {
+                                    $deleteFileAction = [
+                                        'class'=>'btn-group-sm',
+                                        'buttons'=>[
+                                            ['type'=>'danger','label'=>'', 'icon' => 'delete', 'target'=> 'file', 'params'=> ['id' => $f['id'], 'action' => 'delete']],
+                                        ]
+                                    ];
+                                    print($this->partial('mkdf/core/partial/actions', $deleteFileAction));
+                                }
+
+                                ?>
+                            </td>
                         </tr>
                     <?php endforeach; ?>
 

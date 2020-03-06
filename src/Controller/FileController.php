@@ -68,6 +68,7 @@ class FileController extends AbstractActionController
                 'actions' => $actions,
                 'can_edit' => $can_edit,
                 'can_read' => $can_read,
+                'can_view' => $can_view
             ]);
         }
         else{
@@ -88,13 +89,6 @@ class FileController extends AbstractActionController
         $can_write = $this->_permissionManager->canWrite($dataset,$user_id);
 
         if ($can_write) {
-            $actions = [
-                'label' => 'Actions',
-                'class' => '',
-                'buttons' => [
-                ]
-            ];
-
             $form = new FileForm($this->_repository);
             $request = $this->getRequest();
             if ($request->isPost()) {
@@ -111,7 +105,6 @@ class FileController extends AbstractActionController
 
                     //Move file to correct location and create DB entry...
                     $this->_repository->createFileEntry($data, $dataset);
-
 
                     $this->flashMessenger()->addSuccessMessage('File uploaded.');
                     return $this->redirect()->toRoute('file', ['action'=>'details', 'id' => $id]);
