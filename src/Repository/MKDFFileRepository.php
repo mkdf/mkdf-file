@@ -38,6 +38,7 @@ class MKDFFileRepository implements MKDFFileRepositoryInterface
     {
         $this->_queries = [
             'isReady'           => 'SELECT id FROM file LIMIT 1',
+            'deleteFile'        => 'DELETE FROM file WHERE id = '.$this->fp('id'),
             'findDatasetFiles'  => 'SELECT id, title, description, dataset_id, filename, filename_original, file_type, file_size, date_created, date_modified '.
                 'FROM file '.
                 'WHERE dataset_id = '.$this->fp('dataset_id'),
@@ -134,6 +135,39 @@ class MKDFFileRepository implements MKDFFileRepositoryInterface
     }
 
     public function deleteFile($id) {
+        //First get file entry details
+        $parameters = [
+            'id' => $id
+        ];
+        $f = null;
+        $statement = $this->_adapter->createStatement($this->getQuery('findFile'));
+        $result = $statement->execute($parameters);
+        if ($result instanceof ResultInterface && $result->isQueryResult()) {
+            $f = $result->current();
+            $f['location'] = $this->_uploadDestination;
+        }
+
+        if ($f != null){
+            //database call to remove entry
+            $statement = $this->_adapter->createStatement($this->getQuery('deleteFile'));
+            $result = $statement->execute($parameters);
+
+
+            //file operation to remove file
+            $file_pointer = $f['location'] . $f['filename'];
+
+            if (!unlink($file_pointer)) {
+                //FIXME - DELETION NOT WORKING
+                return false;
+            }
+            else {
+                return true;
+            }
+
+        }
+        else {
+            return false;
+        }
 
     }
 }
