@@ -1,0 +1,8 @@
+<h1>Delete File</h1>
+<?= $this->partial('mkdf/core/partial/messages', ['messages' => $messages] ) ?>
+<!-- Token: <?= $token ?> -->
+<?= $this->partial('mkdf/core/partial/actions', [
+    'buttons'=>[
+        ['type'=>'danger','label'=>'Yes, delete this file', 'target'=> 'file', 'params'=> ['id' => $file['id'], 'action' => 'delete'], 'query' => ['token' => $token]],
+        ['type'=>'secondary','label'=>'No, go back please', 'target'=> 'file', 'params'=> ['id' => $dataset->id, 'action' => 'details']]]
+] ); ?>

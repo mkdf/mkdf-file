@@ -7,6 +7,7 @@ use MKDF\Datasets\Service\DatasetPermissionManager;
 use MKDF\Keys\Repository\MKDFKeysRepositoryInterface;
 use MKDF\Stream\Repository\MKDFStreamRepositoryInterface;
 use Zend\Mvc\Controller\AbstractActionController;
+use Zend\Session\Container;
 use Zend\View\Model\ViewModel;
 
 class FileController extends AbstractActionController
@@ -141,8 +142,7 @@ class FileController extends AbstractActionController
         //print_r($dataset);
         //$message = "Dataset: " . $id;
         $actions = [];
-        $can_view = $this->_permissionManager->canView($dataset,$user_id);
-        $can_read = $this->_permissionManager->canRead($dataset,$user_id);
+        $dataset = $this->_dataset_repository->findDataset($file['dataset_id']);
 
         if ($can_read && !is_null($file)) {
             $fileName = $file['location'].$dataset->uuid."/".$file['filename'];
@@ -164,8 +164,58 @@ class FileController extends AbstractActionController
             return $response;
         }
         else {
-            $this->flashMessenger()->addErrorMessage('Unauthorised to read fiels from this dataset.');
+            $this->flashMessenger()->addErrorMessage('Unauthorised to read files from this dataset.');
+            return $this->redirect()->toRoute('file', ['action'=>'details', 'id' => $file['dataset_id']]);
+        }
+    }
+
+    public function deleteConfirmAction() {
+        //
+        $fileId = (int) $this->params()->fromRoute('id', 0);
+        $file = $this->_repository->findFile($fileId);
+        $dataset = $this->_dataset_repository->findDataset($file['dataset_id']);
+        $user_id = $this->currentUser()->getId();
+        $can_view = $this->_permissionManager->canView($dataset,$user_id);
+        $can_read = $this->_permissionManager->canRead($dataset,$user_id);
+        $can_edit = $this->_permissionManager->canEdit($dataset,$user_id);
+        $can_write = $this->_permissionManager->canWrite($dataset,$user_id);
+        if($can_edit){
+            $token = uniqid(true);
+            $container = new Container('File_Management');
+            $container->delete_token = $token;
+            $messages[] = [ 'type'=> 'warning', 'message' =>
+                'Are you sure you want to delete this file?'];
+            return new ViewModel(['file' => $file, 'dataset' => $dataset, 'token' => $token, 'messages' => $messages]);
+        }else{
+            $this->flashMessenger()->addErrorMessage('Unauthorised to delete file.');
+            return $this->redirect()->toRoute('file', ['action'=>'details', 'id' => $file['dataset_id']]);
+        }
+    }
+
+    public function deleteAction(){
+        $fileId = (int) $this->params()->fromRoute('id', 0);
+        $token = $this->params()->fromQuery('token', '');
+        $file = $this->_repository->findFile($fileId);
+        $dataset = $this->_dataset_repository->findDataset($file['dataset_id']);
+        $user_id = $this->currentUser()->getId();
+        $can_view = $this->_permissionManager->canView($dataset,$user_id);
+        $can_read = $this->_permissionManager->canRead($dataset,$user_id);
+        $can_edit = $this->_permissionManager->canEdit($dataset,$user_id);
+        $can_write = $this->_permissionManager->canWrite($dataset,$user_id);
+        if($dataset == null){
+            throw new \Exception('Not found');
+        }
+
+        $container = new Container('File_Management');
+        $valid_token = ($container->delete_token == $token);
+        if($can_edit && $valid_token){
+            $outcome = $this->_repository->deleteFile($fileId);
+            unset($container->delete_token);
+            $this->flashMessenger()->addSuccessMessage('The file was deleted successfully.');
             return $this->redirect()->toRoute('file', ['action'=>'details', 'id' => $dataset->id]);
+        }else{
+            $this->flashMessenger()->addErrorMessage('Unauthorised. Delete token was ' . (($valid_token)?'valid':'invalid') . '.');
+            return $this->redirect()->toRoute('file', ['action'=>'details', 'id' => $file['dataset_id']]);
         }
     }
 

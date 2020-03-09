@@ -45,7 +45,7 @@
                                     $deleteFileAction = [
                                         'class'=>'btn-group-sm',
                                         'buttons'=>[
-                                            ['type'=>'danger','label'=>'', 'icon' => 'delete', 'target'=> 'file', 'params'=> ['id' => $f['id'], 'action' => 'delete']],
+                                            ['type'=>'danger','label'=>'', 'icon' => 'delete', 'target'=> 'file', 'params'=> ['id' => $f['id'], 'action' => 'delete-confirm']],
                                         ]
                                     ];
                                     print($this->partial('mkdf/core/partial/actions', $deleteFileAction));

@@ -132,4 +132,8 @@ class MKDFFileRepository implements MKDFFileRepositoryInterface
         }
         return $f;
     }
+
+    public function deleteFile($id) {
+
+    }
 }
