@@ -42,9 +42,10 @@ class MKDFFileRepository implements MKDFFileRepositoryInterface
             'findDatasetFiles'  => 'SELECT id, title, description, dataset_id, filename, filename_original, file_type, file_size, date_created, date_modified '.
                 'FROM file '.
                 'WHERE dataset_id = '.$this->fp('dataset_id'),
-            'findFile'  => 'SELECT id, title, description, dataset_id, filename, filename_original, file_type, file_size, date_created, date_modified '.
-                'FROM file '.
-                'WHERE id = '.$this->fp('id'),
+            'findFile'  => 'SELECT f.id, f.title, f.description, f.dataset_id, f.filename, '.
+                'f.filename_original, f.file_type, f.file_size, f.date_created, f.date_modified, d.uuid '.
+                'FROM file f JOIN dataset d ON d.id = f.dataset_id '.
+                'WHERE f.id = '.$this->fp('id'),
             'insertFile'     => 'INSERT INTO file ('.
                 'title, description, dataset_id, filename, filename_original, file_type, file_size, date_created, date_modified'.
                 ') VALUES ('.
@@ -154,7 +155,7 @@ class MKDFFileRepository implements MKDFFileRepositoryInterface
 
 
             //file operation to remove file
-            $file_pointer = $f['location'] . $f['filename'];
+            $file_pointer = $f['location'] . $f['uuid'] . "/" . $f['filename'];
 
             if (!unlink($file_pointer)) {
                 //FIXME - DELETION NOT WORKING
