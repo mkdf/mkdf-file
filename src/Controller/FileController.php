@@ -139,11 +139,8 @@ class FileController extends AbstractActionController
         $fileId = (int) $this->params()->fromRoute('id', 0);
         $file = $this->_repository->findFile($fileId);
         $dataset = $this->_dataset_repository->findDataset($file['dataset_id']);
-        //print_r($dataset);
-        //$message = "Dataset: " . $id;
         $actions = [];
-        $dataset = $this->_dataset_repository->findDataset($file['dataset_id']);
-
+        $can_read = $this->_permissionManager->canRead($dataset,$user_id);
         if ($can_read && !is_null($file)) {
             $fileName = $file['location'].$dataset->uuid."/".$file['filename'];
 
