@@ -44,7 +44,7 @@ class FileFeature implements DatasetsFeatureInterface
         }
     }
     public function getLabel(){
-        return 'Files';
+        return '<i class="fas fa-folder-open"></i> Files';
     }
     public function isActive(){
         return $this->active;
