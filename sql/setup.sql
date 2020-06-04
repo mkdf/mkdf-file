@@ -4,7 +4,7 @@ create table if not exists file
         primary key,
     dataset_id        int           not null,
     title             varchar(64)   not null,
-    description       varchar(1024) null,
+    description       text null,
     filename          varchar(64)   not null,
     filename_original varchar(64)   not null,
     file_type         varchar(64)   null,
