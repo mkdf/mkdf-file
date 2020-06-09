@@ -7,7 +7,7 @@ create table if not exists file
     description       text null,
     filename          varchar(64)   not null,
     filename_original varchar(64)   not null,
-    file_type         varchar(64)   null,
+    file_type         varchar(1024)   null,
     file_size         int           null,
     date_created      datetime      null,
     date_modified     datetime      null,
