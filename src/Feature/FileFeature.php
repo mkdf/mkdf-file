@@ -34,9 +34,9 @@ class FileFeature implements DatasetsFeatureInterface
         return '/dataset/file/upload/'.$id;
     }
     public function hasFeature($id){
-        // Make a DB call for this dataset to see if it's a stream dataset
+        // Make a DB call for this dataset to see if it's a file dataset
         $dataset = $this->_dataset_repository->findDataset($id);
-        if ($dataset->type == 2) {
+        if ($dataset->type == 'File') {
             return true;
         }
         else {
