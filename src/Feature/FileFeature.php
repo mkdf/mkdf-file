@@ -36,7 +36,7 @@ class FileFeature implements DatasetsFeatureInterface
     public function hasFeature($id){
         // Make a DB call for this dataset to see if it's a file dataset
         $dataset = $this->_dataset_repository->findDataset($id);
-        if ($dataset->type == 'File') {
+        if (strtolower($dataset->type) == 'file') {
             return true;
         }
         else {
