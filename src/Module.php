@@ -3,6 +3,7 @@ namespace MKDF\File;
 
 use MKDF\Datasets\Service\DatasetsFeatureManagerInterface;
 use MKDF\File\Feature\FileFeature;
+use MKDF\File\Repository\MKDFFileRepositoryInterface;
 use Zend\Mvc\MvcEvent;
 
 class Module
