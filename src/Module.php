@@ -19,7 +19,11 @@ class Module
      */
     public function onBootstrap(MvcEvent $event)
     {
-        $featureManager = $event->getApplication()->getServiceManager()->get(DatasetsFeatureManagerInterface::class);
-        $featureManager->registerFeature($event->getApplication()->getServiceManager()->get(FileFeature::class));
+      // Initialisation
+      $repository = $event->getApplication()->getServiceManager()->get(MKDFFileRepositoryInterface::class);
+      $repository->init();
+
+      $featureManager = $event->getApplication()->getServiceManager()->get(DatasetsFeatureManagerInterface::class);
+      $featureManager->registerFeature($event->getApplication()->getServiceManager()->get(FileFeature::class));
     }
 }
