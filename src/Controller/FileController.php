@@ -100,7 +100,7 @@ class FileController extends AbstractActionController
                 );
 
                 $form->setData($post);
-                if ($form->isValid()) {
+                if ($form->isValid() && $_FILES['data-file']['error'] == 0) {
                     $data = $form->getData();
                     // Form is valid, save the form!
 
@@ -109,6 +109,11 @@ class FileController extends AbstractActionController
 
                     $this->flashMessenger()->addSuccessMessage('File uploaded.');
                     return $this->redirect()->toRoute('file', ['action'=>'details', 'id' => $id]);
+                }
+                else {
+                    if ($_FILES['data-file']['error'] != 0) {
+                        $this->flashMessenger()->addErrorMessage('File error: '.$_FILES['data-file']['error']);
+                    }
                 }
             }
 
