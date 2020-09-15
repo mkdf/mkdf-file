@@ -3,6 +3,7 @@ namespace MKDF\File;
 
 use MKDF\Datasets\Service\DatasetsFeatureManagerInterface;
 use MKDF\File\Feature\FileFeature;
+use MKDF\File\Repository\MKDFFileRepositoryInterface;
 use Zend\Mvc\MvcEvent;
 
 class Module
@@ -19,7 +20,11 @@ class Module
      */
     public function onBootstrap(MvcEvent $event)
     {
-        $featureManager = $event->getApplication()->getServiceManager()->get(DatasetsFeatureManagerInterface::class);
-        $featureManager->registerFeature($event->getApplication()->getServiceManager()->get(FileFeature::class));
+      // Initialisation
+      $repository = $event->getApplication()->getServiceManager()->get(MKDFFileRepositoryInterface::class);
+      $repository->init();
+
+      $featureManager = $event->getApplication()->getServiceManager()->get(DatasetsFeatureManagerInterface::class);
+      $featureManager->registerFeature($event->getApplication()->getServiceManager()->get(FileFeature::class));
     }
 }
