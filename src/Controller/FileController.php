@@ -111,8 +111,9 @@ class FileController extends AbstractActionController
                     return $this->redirect()->toRoute('file', ['action'=>'details', 'id' => $id]);
                 }
                 else {
+                    $this->flashMessenger()->addErrorMessage('Form submission invalid.');
                     if ($_FILES['data-file']['error'] != 0) {
-                        $this->flashMessenger()->addErrorMessage('File error: '.$_FILES['data-file']['error']);
+                        $this->flashMessenger()->addErrorMessage('Uploaded file missing or too large.');
                     }
                 }
             }
