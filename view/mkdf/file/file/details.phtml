@@ -27,16 +27,16 @@
                         <tr>
                             <td><?= $this->escapeHtml($f['title']) ?></td>
                             <td><?= $this->escapeHtml($f['description']) ?></td>
-                            <td><?= $this->escapeHtml($f['filename_original']) ?></td>
-                            <td><?= $this->escapeHtml($f['file_type']) ?></td>
-                            <td><?= $this->escapeHtml($f['file_size_str']) ?></td>
+                            <td><?= $this->escapeHtml($f['filenameOriginal']) ?></td>
+                            <td><?= $this->escapeHtml($f['type']) ?></td>
+                            <td><?= $this->escapeHtml($f['sizeStr']) ?></td>
                             <td class="text-nowrap">
                                 <?php
                                 if ($can_read) {
                                     $downloadFileAction = [
                                         'class'=>'btn-group-sm',
                                         'buttons'=>[
-                                            ['type'=>'primary','label'=>'', 'icon' => 'download', 'target'=> 'file', 'params'=> ['id' => $f['id'], 'action' => 'download']],
+                                            ['type'=>'primary','label'=>'', 'icon' => 'download', 'target'=> 'file', 'params'=> ['id' => $f['filename'], 'action' => 'download']],
                                         ]
                                     ];
                                     print($this->partial('mkdf/core/partial/actions', $downloadFileAction));
@@ -45,7 +45,7 @@
                                     $deleteFileAction = [
                                         'class'=>'btn-group-sm',
                                         'buttons'=>[
-                                            ['type'=>'danger','label'=>'', 'icon' => 'delete', 'target'=> 'file', 'params'=> ['id' => $f['id'], 'action' => 'delete-confirm']],
+                                            ['type'=>'danger','label'=>'', 'icon' => 'delete', 'target'=> 'file', 'params'=> ['id' => $f['filename'], 'action' => 'delete-confirm']],
                                         ]
                                     ];
                                     print($this->partial('mkdf/core/partial/actions', $deleteFileAction));

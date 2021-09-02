@@ -1,7 +1,6 @@
 <?php
 namespace MKDF\File\Repository;
 
-
 use Zend\Db\Adapter\Adapter;
 use Zend\Db\Adapter\Driver\ResultInterface;
 use Zend\Db\ResultSet\ResultSet;
@@ -76,19 +75,13 @@ class MKDFFileRepository implements MKDFFileRepositoryInterface
 
     public function findDatasetFiles ($datasetId) {
         $files = [];
-        $parameters = [
-            'dataset_id' => $datasetId
-        ];
-        $statement = $this->_adapter->createStatement($this->getQuery('findDatasetFiles'));
-        $result = $statement->execute($parameters);
-        if ($result instanceof ResultInterface && $result->isQueryResult()) {
-            $resultSet = new ResultSet;
-            $resultSet->initialize($result);
-            foreach ($resultSet as $row) {
-                $row['file_size_str'] = $this->_formatBytes((int)$row['file_size'],1);
-                array_push($files, $row);
-            }
+        $repsonse = $this->sendQuery('GET','/file/' . $datasetId, array());
+        //echo ($repsonse);
+        $files = json_decode($repsonse,true);
+        foreach ($files as $key=>$value) {
+            $files[$key]['sizeStr'] = $this->_formatBytes($value['size']);
         }
+
         return $files;
     }
 
@@ -170,6 +163,73 @@ class MKDFFileRepository implements MKDFFileRepositoryInterface
             return false;
         }
 
+    }
+
+
+    /**
+     * @param $method
+     * @param $path
+     * @param $parameters
+     * @return bool|string
+     * @throws \Exception
+     */
+    private function sendQuery($method, $path, $parameters) {
+        $username = $this->_config['mkdf-stream']['user'];
+        $password = $this->_config['mkdf-stream']['pass'];
+        $server = $this->_config['mkdf-stream']['server-url'];
+        //$parameters = array_merge(array('user' => $username,'pwd'=>$password), $parameters);
+        $url = $server . $path;
+        $ch = curl_init();
+
+        $auth = 'Authorization: Basic MTg4NDBiMDMtMjhiZC00MTU1LWE2YWQtNzhjM2VmNzQyNTNkOjE4ODQwYjAzLTI4YmQtNDE1NS1hNmFkLTc4YzNlZjc0MjUzZA==';
+
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array($auth));
+
+        switch ($method){
+            case "PUT":
+                curl_setopt($ch, CURLOPT_URL, $url);
+                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "PUT");
+                curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($parameters));
+                break;
+            case "POST":
+                curl_setopt($ch, CURLOPT_URL, $url);
+                curl_setopt($ch, CURLOPT_POST, 1);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($parameters));
+                break;
+            case "GET":
+                curl_setopt($ch, CURLOPT_HTTPGET, 1);
+                $url = $url . '?' . http_build_query($parameters);
+                curl_setopt($ch, CURLOPT_URL, $url);
+                break;
+            default:
+                //unexpected method
+                throw new \Exception("Unexpected method");
+        }
+        // receive server response ...
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+        $server_output = curl_exec ($ch);
+
+        if (!curl_errno($ch)) {
+            switch ($http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE)) {
+                case 201:  # OK Created
+                    //self::log('Message from API Factory server: ',$server_output);
+                    //echo "201";
+                    break;
+                case 200:  # OK Updated
+                    //self::log('Message from API Factory server: ',$server_output);
+                    //echo "200";
+                    break;
+                default:
+                    throw new \Exception('Unexpected HTTP code: '. $http_code ."\n\nURL: ". $url . "\n\n" . $server_output);
+                //echo "Something else: ".$http_code;
+            }
+        }else{
+            //self::logErr('Curl Error: ', $curl_errno($ch));
+            throw new \Exception('cURL error: '. curl_error($ch) ."\n\nURL: ". $url . "\n\n" . $server_output);
+        }
+        curl_close ($ch);
+        return $server_output;
     }
 
     public function init(){

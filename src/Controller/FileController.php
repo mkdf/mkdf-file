@@ -60,7 +60,9 @@ class FileController extends AbstractActionController
             ];
         }
         if ($can_view) {
-            $files = $this->_repository->findDatasetFiles($id);
+            $dataset = $this->_dataset_repository->findDataset($id);
+            $uuid = $dataset->uuid;
+            $files = $this->_repository->findDatasetFiles($uuid);
             return new ViewModel([
                 'message' => $message,
                 'dataset' => $dataset,
