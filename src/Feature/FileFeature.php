@@ -36,12 +36,15 @@ class FileFeature implements DatasetsFeatureInterface
     public function hasFeature($id){
         // Make a DB call for this dataset to see if it's a file dataset
         $dataset = $this->_dataset_repository->findDataset($id);
-        if (strtolower($dataset->type) == 'file') {
+        //files now stored with regular API/Stream datasets
+        //if (strtolower($dataset->type) == 'file') {
+        if (strtolower($dataset->type) == 'stream') {
             return true;
         }
         else {
             return false;
         }
+
     }
     public function getLabel(){
         return '<i class="fas fa-folder-open"></i> Files';
