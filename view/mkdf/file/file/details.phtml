@@ -55,7 +55,7 @@
                                     $downloadFileAction = [
                                         'class'=>'btn-group-sm',
                                         'buttons'=>[
-                                            ['type'=>'primary','label'=>'', 'icon' => 'download', 'target'=> 'file', 'params'=> ['id' => $f['filename'], 'action' => 'download']],
+                                            ['type'=>'primary','label'=>'', 'icon' => 'download', 'target'=> 'file', 'params'=> ['id' => $dataset->id, 'filename' => $f['filenameOriginal'], 'action' => 'download']],
                                         ]
                                     ];
                                     print($this->partial('mkdf/core/partial/actions', $downloadFileAction));
@@ -64,7 +64,7 @@
                                     $deleteFileAction = [
                                         'class'=>'btn-group-sm',
                                         'buttons'=>[
-                                            ['type'=>'danger','label'=>'', 'icon' => 'delete', 'target'=> 'file', 'params'=> ['id' => $f['filename'], 'action' => 'delete-confirm']],
+                                            ['type'=>'danger','label'=>'', 'icon' => 'delete', 'target'=> 'file', 'params'=> ['id' => $f['filenameOriginal'], 'action' => 'delete-confirm']],
                                         ]
                                     ];
                                     print($this->partial('mkdf/core/partial/actions', $deleteFileAction));

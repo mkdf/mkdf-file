@@ -33,6 +33,8 @@ class MKDFFileRepository implements MKDFFileRepositoryInterface
     private function qi($param) {
         return $this->_adapter->platform->quoteIdentifier($param);
     }
+
+    //no longer required
     private function buildQueries()
     {
         $this->_queries = [
@@ -89,8 +91,6 @@ class MKDFFileRepository implements MKDFFileRepositoryInterface
         $username = $this->_config['mkdf-stream']['user'];
         $password = $this->_config['mkdf-stream']['pass'];
         $server = $this->_config['mkdf-stream']['server-url'];
-        $filename = basename($formData['data-file']['tmp_name']);
-
         $localFile = $formData['data-file']['tmp_name'];
         $filename = basename($formData['data-file']['name']);
 
@@ -124,6 +124,7 @@ class MKDFFileRepository implements MKDFFileRepositoryInterface
         return true;
     }
 
+    //No longer used...
     public function findFile($id){
         $parameters = [
             'id' => $id
@@ -136,6 +137,40 @@ class MKDFFileRepository implements MKDFFileRepositoryInterface
             $f['location'] = $this->_uploadDestination;
         }
         return $f;
+    }
+
+    public function getFile($datasetID,$filename) {
+        $username = $this->_config['mkdf-stream']['user'];
+        $password = $this->_config['mkdf-stream']['pass'];
+        $server = $this->_config['mkdf-stream']['server-url'];
+        //$parameters = array_merge(array('user' => $username,'pwd'=>$password), $parameters);
+        $path = '/file/' . $datasetID . '/' . $filename;
+        $url = $server . $path;
+        $curl = curl_init();
+
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => $url,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'GET',
+            CURLOPT_USERPWD => $username . ":" . $password,
+        ));
+
+        $response = curl_exec($curl);
+        $curlInfo = null;
+        if (!curl_errno($curl)) {
+            $curlInfo = curl_getinfo($curl);
+        }
+        curl_close($curl);
+        $data = [
+            'response' => $response,
+            'curlInfo' => $curlInfo
+        ];
+        return $data;
     }
 
     public function deleteFile($id) {

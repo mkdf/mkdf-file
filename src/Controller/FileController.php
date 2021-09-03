@@ -145,29 +145,36 @@ class FileController extends AbstractActionController
 
     public function downloadAction() {
         $user_id = $this->currentUser()->getId();
-        $fileId = (int) $this->params()->fromRoute('id', 0);
-        $file = $this->_repository->findFile($fileId);
-        $dataset = $this->_dataset_repository->findDataset($file['dataset_id']);
+        $datasetID =  $this->params()->fromRoute('id', 0);
+        $filename = $this->params()->fromRoute('filename');
+        $dataset = $this->_dataset_repository->findDataset($datasetID);
+        $datasetUUID = $dataset->uuid;
         $actions = [];
         $can_read = $this->_permissionManager->canRead($dataset,$user_id);
-        if ($can_read && !is_null($file)) {
-            $fileName = $file['location'].$dataset->uuid."/".$file['filename'];
-
-            $response = new \Zend\Http\Response\Stream();
-            $response->setStream(fopen($fileName, 'r'));
-            $response->setStatusCode(200);
-            $response->setStreamName($file['filename_original']);
-            $headers = new \Zend\Http\Headers();
-            $headers->addHeaders(array(
-                'Content-Disposition' => 'attachment; filename="' . $file['filename_original'] .'"',
-                'Content-Type' => 'application/octet-stream',
-                'Content-Length' => filesize($fileName),
-                'Expires' => '@0', // @0, because zf2 parses date as string to \DateTime() object
-                'Cache-Control' => 'must-revalidate',
-                'Pragma' => 'public'
-            ));
-            $response->setHeaders($headers);
-            return $response;
+        $userHasKey = $this->_keys_repository->userHasDatasetKey($user_id,$dataset->id);
+        if ($can_read && $userHasKey) {
+            $response = $this->_repository->getFile($datasetUUID,$filename);
+            if ($response['response']) {
+                $vm = new ViewModel(['data' => $response['response']]);
+                $this->getResponse()->setStatusCode($response['curlInfo']['http_code']);
+                //force file to download as an attachment rather than render/open in the browser...
+                $this->getResponse()->getHeaders()->addHeaders([
+                    'Content-Disposition' => 'attachment; filename="' . $filename .'"',
+                ]);
+                $this->getResponse()->getHeaders()->addHeaders([
+                    'Content-Type' => $response['curlInfo']['content_type']
+                ]);
+                $this->getResponse()->getHeaders()->addHeaders([
+                    'Content-Length' => $response['curlInfo']['download_content_length']
+                ]);
+                $vm->setTerminal(true); //Send response back verbatim, no header/footer padding
+                return $vm;
+            }
+            else {
+                //$response['response'] as false suggests no response from backend graph db
+                $this->getResponse()->setStatusCode(500);
+                return new JsonModel(['error' => 'No response from filestore']);
+            }
         }
         else {
             $this->flashMessenger()->addErrorMessage('Unauthorised to read files from this dataset.');
