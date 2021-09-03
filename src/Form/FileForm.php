@@ -54,7 +54,7 @@ class FileForm extends Form
 
         // File Input
         $file = new File('data-file');
-        $file->setLabel('Data file');
+        $file->setLabel('File');
         $file->setAttribute('id', 'data-file');
         $this->add($file);
 

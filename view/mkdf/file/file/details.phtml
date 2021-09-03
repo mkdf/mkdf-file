@@ -10,6 +10,25 @@
             <!--
             UUID: <?= $dataset->uuid ?><br />
             -->
+
+            <form id="sparqlForm">
+                <div class="row">
+                    <div class="col-md-12"><label for="queryKey">Select a key to use for interacting with these files</label><br /></div>
+                </div>
+                <div class="row">
+                    <div class="form-group col-md-12">
+
+                        <select class="custom-select custom-select-sm" id="queryKey">
+                            <?php
+                            foreach ($keys as $key) {
+                                echo ("<option value='".$key['keyUUID']."'>".$key['keyName']." [".$key['keyUUID']."]</option>");
+                            }
+                            ?>
+                        </select>
+                    </div>
+                </div>
+            </form>
+
             <?php if ($can_view):?>
                 <table class="table table-bordered">
                     <tr class="table-active">

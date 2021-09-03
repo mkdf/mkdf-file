@@ -45,7 +45,11 @@ class FileController extends AbstractActionController
             'buttons' => [
             ]
         ];
-        if ($can_write) {
+
+        //Does the user have a key on this stream
+        $userHasKey = $this->_keys_repository->userHasDatasetKey($user_id,$dataset->id);
+
+        if ($can_write && $userHasKey) {
             $actions['buttons'][] = [
 
                     'type' => 'primary',
@@ -59,19 +63,23 @@ class FileController extends AbstractActionController
 
             ];
         }
-        if ($can_view) {
+
+        if ($can_view && $can_read && $userHasKey) {
             $dataset = $this->_dataset_repository->findDataset($id);
             $uuid = $dataset->uuid;
             $files = $this->_repository->findDatasetFiles($uuid);
+            $keys = $this->_keys_repository->userDatasetKeys($user_id,$dataset->id);
             return new ViewModel([
                 'message' => $message,
                 'dataset' => $dataset,
                 'files'   => $files,
+                'keys' => $keys,
                 'features' => $this->datasetsFeatureManager()->getFeatures($id),
                 'actions' => $actions,
                 'can_edit' => $can_edit,
                 'can_read' => $can_read,
-                'can_view' => $can_view
+                'can_view' => $can_view,
+                'user_has_key' => $userHasKey,
             ]);
         }
         else{
@@ -90,8 +98,10 @@ class FileController extends AbstractActionController
         $can_read = $this->_permissionManager->canRead($dataset,$user_id);
         $can_edit = $this->_permissionManager->canEdit($dataset,$user_id);
         $can_write = $this->_permissionManager->canWrite($dataset,$user_id);
+        $userHasKey = $this->_keys_repository->userHasDatasetKey($user_id,$dataset->id);
 
-        if ($can_write) {
+        if ($can_write && $userHasKey) {
+            $keys = $this->_keys_repository->userDatasetKeys($user_id,$dataset->id);
             $form = new FileForm($this->_repository);
             $request = $this->getRequest();
             if ($request->isPost()) {
@@ -107,7 +117,7 @@ class FileController extends AbstractActionController
                     // Form is valid, save the form!
 
                     //Move file to correct location and create DB entry...
-                    $this->_repository->createFileEntry($data, $dataset);
+                    $this->_repository->createFileEntry($data, $dataset->uuid);
 
                     $this->flashMessenger()->addSuccessMessage('File uploaded.');
                     return $this->redirect()->toRoute('file', ['action'=>'details', 'id' => $id]);
@@ -123,18 +133,9 @@ class FileController extends AbstractActionController
             return new ViewModel([
                 'form' => $form,
                 'dataset' => $dataset,
+                'keys' => $keys,
                 'features' => $this->datasetsFeatureManager()->getFeatures($id),
             ]);
-            /*
-            return new ViewModel([
-                'message' => $message,
-                'dataset' => $dataset,
-                'features' => $this->datasetsFeatureManager()->getFeatures($id),
-                'actions' => $actions,
-                'can_edit' => $can_edit,
-                'can_read' => $can_read,
-            ]);
-            */
         }
         else{
             $this->flashMessenger()->addErrorMessage('Unauthorised to write to dataset.');

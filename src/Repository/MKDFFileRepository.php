@@ -85,33 +85,43 @@ class MKDFFileRepository implements MKDFFileRepositoryInterface
         return $files;
     }
 
-    public function createFileEntry($formData, $dataset){
-        //print_r($formData);
-        //print_r($dataset);
-        $destination = $this->_uploadDestination . $dataset->uuid . "/";
-        //keep random upload fiename. Original filename will be stored in DB for use when
-        //file is downloaded
+    public function createFileEntry($formData, $datasetID){
+        $username = $this->_config['mkdf-stream']['user'];
+        $password = $this->_config['mkdf-stream']['pass'];
+        $server = $this->_config['mkdf-stream']['server-url'];
         $filename = basename($formData['data-file']['tmp_name']);
 
-        if (!file_exists($destination)) {
-            mkdir($destination, 0777, true);
-        }
-        rename ($formData['data-file']['tmp_name'],$destination.$filename);
+        $localFile = $formData['data-file']['tmp_name'];
+        $filename = basename($formData['data-file']['name']);
 
-        //update DB
-        $parameters = [
-            'title'             => $formData['title'],
-            'description'       => $formData['description'],
-            'dataset_id'        => $dataset->id,
-            'filename'          => $filename,
-            'filename_original' => $formData['data-file']['name'],
-            'file_type'         => $formData['data-file']['type'],
-            'file_size'         => $formData['data-file']['size']
-        ];
-        $statement = $this->_adapter->createStatement($this->getQuery('insertFile'));
-        $statement->execute($parameters);
-        $id = $this->_adapter->getDriver()->getLastGeneratedValue();
-        return $id;
+        $path = '/file/' . $datasetID;
+        $url = $server . $path;
+        $ch = curl_init();
+
+        curl_setopt_array($ch, array(
+            CURLOPT_URL => 'http://apif-beta.local:8080/file/793f9a38-d5c6-462b-987f-f78e257aa416',
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_POSTFIELDS => array(
+                'title' => $formData['title'],
+                'description' => $formData['description'],
+                'file' => curl_file_create($localFile, $formData['data-file']['type'], $filename)
+            ),
+            CURLOPT_USERPWD => $username . ":" . $password,
+        ));
+
+        $response = curl_exec($ch);
+
+        curl_close($ch);
+        echo $response;
+
+
+        return true;
     }
 
     public function findFile($id){
@@ -165,7 +175,6 @@ class MKDFFileRepository implements MKDFFileRepositoryInterface
 
     }
 
-
     /**
      * @param $method
      * @param $path
@@ -181,9 +190,7 @@ class MKDFFileRepository implements MKDFFileRepositoryInterface
         $url = $server . $path;
         $ch = curl_init();
 
-        $auth = 'Authorization: Basic MTg4NDBiMDMtMjhiZC00MTU1LWE2YWQtNzhjM2VmNzQyNTNkOjE4ODQwYjAzLTI4YmQtNDE1NS1hNmFkLTc4YzNlZjc0MjUzZA==';
-
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array($auth));
+        curl_setopt($ch, CURLOPT_USERPWD, $username . ":" . $password);
 
         switch ($method){
             case "PUT":
