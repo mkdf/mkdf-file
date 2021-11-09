@@ -79,6 +79,7 @@ class FileController extends AbstractActionController
                 'can_edit' => $can_edit,
                 'can_read' => $can_read,
                 'can_view' => $can_view,
+                'can_write' => $can_write,
                 'user_has_key' => $userHasKey,
             ]);
         }
@@ -184,21 +185,22 @@ class FileController extends AbstractActionController
 
     public function deleteConfirmAction() {
         //
-        $fileId = (int) $this->params()->fromRoute('id', 0);
-        $file = $this->_repository->findFile($fileId);
-        $dataset = $this->_dataset_repository->findDataset($file['dataset_id']);
+        $datasetID =  $this->params()->fromRoute('id', 0);
+        $filename = $this->params()->fromRoute('filename');
+        $dataset = $this->_dataset_repository->findDataset($datasetID);
+        $datasetUUID = $dataset->uuid;
         $user_id = $this->currentUser()->getId();
         $can_view = $this->_permissionManager->canView($dataset,$user_id);
         $can_read = $this->_permissionManager->canRead($dataset,$user_id);
         $can_edit = $this->_permissionManager->canEdit($dataset,$user_id);
         $can_write = $this->_permissionManager->canWrite($dataset,$user_id);
-        if($can_edit){
+        if($can_write){
             $token = uniqid(true);
             $container = new Container('File_Management');
             $container->delete_token = $token;
             $messages[] = [ 'type'=> 'warning', 'message' =>
                 'Are you sure you want to delete this file?'];
-            return new ViewModel(['file' => $file, 'dataset' => $dataset, 'token' => $token, 'messages' => $messages]);
+            return new ViewModel(['filename' => $filename, 'dataset' => $dataset, 'token' => $token, 'messages' => $messages]);
         }else{
             $this->flashMessenger()->addErrorMessage('Unauthorised to delete file.');
             return $this->redirect()->toRoute('file', ['action'=>'details', 'id' => $file['dataset_id']]);
@@ -206,10 +208,11 @@ class FileController extends AbstractActionController
     }
 
     public function deleteAction(){
-        $fileId = (int) $this->params()->fromRoute('id', 0);
+        $datasetID =  $this->params()->fromRoute('id', 0);
+        $filename = $this->params()->fromRoute('filename');
+        $dataset = $this->_dataset_repository->findDataset($datasetID);
+        $datasetUUID = $dataset->uuid;
         $token = $this->params()->fromQuery('token', '');
-        $file = $this->_repository->findFile($fileId);
-        $dataset = $this->_dataset_repository->findDataset($file['dataset_id']);
         $user_id = $this->currentUser()->getId();
         $can_view = $this->_permissionManager->canView($dataset,$user_id);
         $can_read = $this->_permissionManager->canRead($dataset,$user_id);
@@ -221,8 +224,8 @@ class FileController extends AbstractActionController
 
         $container = new Container('File_Management');
         $valid_token = ($container->delete_token == $token);
-        if($can_edit && $valid_token){
-            $outcome = $this->_repository->deleteFile($fileId);
+        if($can_write && $valid_token){
+            $outcome = $this->_repository->deleteFile($filename);
             unset($container->delete_token);
             $this->flashMessenger()->addSuccessMessage('The file was deleted successfully.');
             return $this->redirect()->toRoute('file', ['action'=>'details', 'id' => $dataset->id]);

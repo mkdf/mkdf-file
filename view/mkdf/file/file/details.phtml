@@ -60,11 +60,11 @@
                                     ];
                                     print($this->partial('mkdf/core/partial/actions', $downloadFileAction));
                                 }
-                                if ($can_edit) {
+                                if ($can_write) {
                                     $deleteFileAction = [
                                         'class'=>'btn-group-sm',
                                         'buttons'=>[
-                                            ['type'=>'danger','label'=>'', 'icon' => 'delete', 'target'=> 'file', 'params'=> ['id' => $f['filenameOriginal'], 'action' => 'delete-confirm']],
+                                            ['type'=>'danger','label'=>'', 'icon' => 'delete', 'target'=> 'file', 'params'=> ['id' => $dataset->id, 'filename' => $f['filenameOriginal'], 'action' => 'delete-confirm']],
                                         ]
                                     ];
                                     print($this->partial('mkdf/core/partial/actions', $deleteFileAction));
