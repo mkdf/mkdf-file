@@ -30,7 +30,6 @@ class FileController extends AbstractActionController
     public function detailsAction() {
         $user_id = $this->currentUser()->getId();
         $id = (int) $this->params()->fromRoute('id', 0);
-        //FIXME - Also make sure this is a file dataset that we are retrieving.
         $dataset = $this->_dataset_repository->findDataset($id);
         $message = "Dataset: " . $id;
         $actions = [];
@@ -54,7 +53,7 @@ class FileController extends AbstractActionController
 
                     'type' => 'primary',
                     'label' => 'Upload new file',
-                    'icon' => 'create',
+                    'icon' => 'upload',
                     'target' => 'file',
                     'params' => [
                         'action' => 'upload',
@@ -239,5 +238,4 @@ class FileController extends AbstractActionController
             return $this->redirect()->toRoute('file', ['action'=>'details', 'id' => $file['dataset_id']]);
         }
     }
-
 }
