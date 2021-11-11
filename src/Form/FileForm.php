@@ -54,20 +54,21 @@ class FileForm extends Form
 
         // File Input
         $file = new File('data-file');
-        $file->setLabel('Data file');
+        $file->setLabel('File');
         $file->setAttribute('id', 'data-file');
         $this->add($file);
 
+
         /*
-        // Add the max file size hidden attribute
         $this->add([
             'type'  => 'hidden',
-            'name' => 'MAX_FILE_SIZE',
+            'name' => 'key',
             'attributes' => [
-                'value' => '1024'
+                'value' => ''
             ],
         ]);
         */
+
 
         // Add the Submit button
         $this->add([

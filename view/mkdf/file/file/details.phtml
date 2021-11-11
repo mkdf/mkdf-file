@@ -6,10 +6,43 @@
         </div>
         <div class="col-md-9">
             <h2>Dataset files</h2>
+            <?= $this->partial('mkdf/core/partial/messages', ['messages' => $messages] ) ?>
             <?= $this->partial('mkdf/core/partial/actions', $actions); ?>
             <!--
             UUID: <?= $dataset->uuid ?><br />
             -->
+
+            <!---
+            <form id="keyForm">
+                <div class="row">
+                    <div class="col-md-12"><label for="queryKey">Select a key to use for interacting with these files</label><br /></div>
+                </div>
+                <div class="row">
+                    <div class="form-group col-md-12">
+
+                        <select class="custom-select custom-select-sm" id="queryKey">
+                            <?php
+                            foreach ($keys as $key) {
+                                echo ("<option value='".$key['keyUUID']."'>".$key['keyName']." [".$key['keyUUID']."]</option>");
+                            }
+                            ?>
+                        </select>
+                    </div>
+                </div>
+            </form>
+            --->
+
+            <div class="row">
+                <div class="col-md-12">Using the following key for file interaction:<br /></div>
+            </div>
+            <div class="row">
+                <div class="form-group col-md-12">
+                    <em><?= $keys[0]['keyName'] ?> - <?= $keys[0]['keyUUID'] ?></em>
+                </div>
+            </div>
+
+
+
             <?php if ($can_view):?>
                 <table class="table table-bordered">
                     <tr class="table-active">
@@ -27,25 +60,25 @@
                         <tr>
                             <td><?= $this->escapeHtml($f['title']) ?></td>
                             <td><?= $this->escapeHtml($f['description']) ?></td>
-                            <td><?= $this->escapeHtml($f['filename_original']) ?></td>
-                            <td><?= $this->escapeHtml($f['file_type']) ?></td>
-                            <td><?= $this->escapeHtml($f['file_size_str']) ?></td>
+                            <td><?= $this->escapeHtml($f['filenameOriginal']) ?></td>
+                            <td><?= $this->escapeHtml($f['type']) ?></td>
+                            <td><?= $this->escapeHtml($f['sizeStr']) ?></td>
                             <td class="text-nowrap">
                                 <?php
                                 if ($can_read) {
                                     $downloadFileAction = [
                                         'class'=>'btn-group-sm',
                                         'buttons'=>[
-                                            ['type'=>'primary','label'=>'', 'icon' => 'download', 'target'=> 'file', 'params'=> ['id' => $f['id'], 'action' => 'download']],
+                                            ['type'=>'primary','label'=>'', 'icon' => 'download', 'target'=> 'file', 'params'=> ['id' => $dataset->id, 'filename' => rawurlencode($f['filenameOriginal']), 'action' => 'download'], 'query' => ['key' => $keys[0]['keyUUID']]],
                                         ]
                                     ];
                                     print($this->partial('mkdf/core/partial/actions', $downloadFileAction));
                                 }
-                                if ($can_edit) {
+                                if ($can_write) {
                                     $deleteFileAction = [
                                         'class'=>'btn-group-sm',
                                         'buttons'=>[
-                                            ['type'=>'danger','label'=>'', 'icon' => 'delete', 'target'=> 'file', 'params'=> ['id' => $f['id'], 'action' => 'delete-confirm']],
+                                            ['type'=>'danger','label'=>'', 'icon' => 'delete', 'target'=> 'file', 'params'=> ['id' => $dataset->id, 'filename' => rawurlencode($f['filenameOriginal']), 'action' => 'delete-confirm'], 'query' => ['key' => $keys[0]['keyUUID']]],
                                         ]
                                     ];
                                     print($this->partial('mkdf/core/partial/actions', $deleteFileAction));

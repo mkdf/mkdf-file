@@ -25,7 +25,7 @@ return [
             'file' => [
                 'type' => Segment::class,
                 'options' => [
-                    'route' => '/dataset/file/:action/:id',
+                    'route' => '/dataset/file/:action/:id[/:filename]',
                     'constraints' => [
                         'action' => '[a-zA-Z][a-zA-Z0-9_-]*',
                         'id' => '[a-zA-Z0-9_-]*',

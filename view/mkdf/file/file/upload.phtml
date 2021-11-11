@@ -6,6 +6,16 @@
         </div>
         <div class="col-md-9">
             <h2>File upload</h2>
+
+            <div class="row">
+                <div class="col-md-12">Using the following key for file upload:<br /></div>
+            </div>
+            <div class="row">
+                <div class="form-group col-md-12">
+                    <em><?= $keys[0]['keyName'] ?> - <?= $keys[0]['keyUUID'] ?></em>
+                </div>
+            </div>
+
             <?php
             $form = $this->form;
 
@@ -36,6 +46,7 @@
 
             <?= $this->form()->openTag($form); ?>
             <div class="form-group">
+                <input type="hidden" name="key" value="<?= $keys[0]['keyUUID'] ?>">
                 <?= $this->formLabel($form->get('title')); ?>
                 <?= $this->formElement($form->get('title')); ?>
                 <?= $this->formElementErrors($form->get('title')); ?>
@@ -56,6 +67,11 @@
                 <?= $this->formElement($form->get('upload')); ?>
             </div>
             <?= $this->form()->closeTag(); ?>
+
+                <a class="btn btn-danger" href="<?= $this->url( 'file', ['id' => $dataset->id]); ?>">
+                    <i class="fas fa-undo-alt"></i> Return to list of files
+                </a>
+
         </div>
     </div>
 </div>

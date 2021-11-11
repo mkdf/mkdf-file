@@ -8,7 +8,8 @@
     "zendframework/zend-db": "^2.8.1",
     "zendframework/zend-mvc-form": "^1.0",
     "mkdf/mkdf-core": "master",
-    "mkdf/mkdf-datasets": "master"
+    "mkdf/mkdf-datasets": "master",
+    "mkdf/mkdf-stream": "master"
   },
     "autoload": {
         "psr-4": {

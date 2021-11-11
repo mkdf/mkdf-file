@@ -1,2 +1,2 @@
 # MK Data Factory / File
-File handling for dataset of type *file* 
+v0.9.5-dev - Replace existing DH Portal-based file handling with an interface to access API Factory backend file handling.

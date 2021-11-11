@@ -1,7 +1,6 @@
 <?php
 namespace MKDF\File\Repository;
 
-
 use Zend\Db\Adapter\Adapter;
 use Zend\Db\Adapter\Driver\ResultInterface;
 use Zend\Db\ResultSet\ResultSet;
@@ -10,7 +9,6 @@ class MKDFFileRepository implements MKDFFileRepositoryInterface
 {
     private $_config;
     private $_adapter;
-    private $_queries;
     private $_uploadDestination;
 
     public function __construct($config)
@@ -24,47 +22,9 @@ class MKDFFileRepository implements MKDFFileRepositoryInterface
             'host'     => $this->_config['db']['host'],
             'port'     => $this->_config['db']['port']
         ]);
-        $this->buildQueries();
         $this->_uploadDestination = $this->_config['mkdf-file']['destination'];
     }
 
-    private function fp($param) {
-        return $this->_adapter->driver->formatParameterName($param);
-    }
-    private function qi($param) {
-        return $this->_adapter->platform->quoteIdentifier($param);
-    }
-    private function buildQueries()
-    {
-        $this->_queries = [
-            'isReady'           => 'SELECT id FROM file LIMIT 1',
-            'deleteFile'        => 'DELETE FROM file WHERE id = '.$this->fp('id'),
-            'findDatasetFiles'  => 'SELECT id, title, description, dataset_id, filename, filename_original, file_type, file_size, date_created, date_modified '.
-                'FROM file '.
-                'WHERE dataset_id = '.$this->fp('dataset_id'),
-            'findFile'  => 'SELECT f.id, f.title, f.description, f.dataset_id, f.filename, '.
-                'f.filename_original, f.file_type, f.file_size, f.date_created, f.date_modified, d.uuid '.
-                'FROM file f JOIN dataset d ON d.id = f.dataset_id '.
-                'WHERE f.id = '.$this->fp('id'),
-            'insertFile'     => 'INSERT INTO file ('.
-                'title, description, dataset_id, filename, filename_original, file_type, file_size, date_created, date_modified'.
-                ') VALUES ('.
-                $this->fp('title').', '.
-                $this->fp('description').', '.
-                $this->fp('dataset_id').', '.
-                $this->fp('filename').', '.
-                $this->fp('filename_original').', '.
-                $this->fp('file_type').', '.
-                $this->fp('file_size').', '.
-                'CURRENT_TIMESTAMP, '.
-                'CURRENT_TIMESTAMP'.
-            ')',
-        ];
-    }
-
-    private function getQuery($query){
-        return $this->_queries[$query];
-    }
 
     private function _formatBytes($size, $precision = 2)
     {
@@ -76,112 +36,190 @@ class MKDFFileRepository implements MKDFFileRepositoryInterface
 
     public function findDatasetFiles ($datasetId) {
         $files = [];
-        $parameters = [
-            'dataset_id' => $datasetId
-        ];
-        $statement = $this->_adapter->createStatement($this->getQuery('findDatasetFiles'));
-        $result = $statement->execute($parameters);
-        if ($result instanceof ResultInterface && $result->isQueryResult()) {
-            $resultSet = new ResultSet;
-            $resultSet->initialize($result);
-            foreach ($resultSet as $row) {
-                $row['file_size_str'] = $this->_formatBytes((int)$row['file_size'],1);
-                array_push($files, $row);
-            }
+        // FIXME - use correct user access key here for getting file list
+        $repsonse = $this->sendQuery('GET','/file/' . $datasetId, array());
+        //echo ($repsonse);
+        $files = json_decode($repsonse,true);
+        foreach ($files as $key=>$value) {
+            $files[$key]['sizeStr'] = $this->_formatBytes($value['size']);
         }
         return $files;
     }
 
-    public function createFileEntry($formData, $dataset){
-        //print_r($formData);
-        //print_r($dataset);
-        $destination = $this->_uploadDestination . $dataset->uuid . "/";
-        //keep random upload fiename. Original filename will be stored in DB for use when
-        //file is downloaded
-        $filename = basename($formData['data-file']['tmp_name']);
+    public function createFileEntry($formData, $datasetID, $keyPassed){
+        //$username = $this->_config['mkdf-stream']['user'];
+        //$password = $this->_config['mkdf-stream']['pass'];
+        $username = $keyPassed;
+        $password = $keyPassed;
+        $server = $this->_config['mkdf-stream']['server-url'];
+        $localFile = $formData['data-file']['tmp_name'];
+        $filename = basename($formData['data-file']['name']);
 
-        if (!file_exists($destination)) {
-            mkdir($destination, 0777, true);
-        }
-        rename ($formData['data-file']['tmp_name'],$destination.$filename);
+        $path = '/file/' . $datasetID;
+        $url = $server . $path;
+        $ch = curl_init();
 
-        //update DB
-        $parameters = [
-            'title'             => $formData['title'],
-            'description'       => $formData['description'],
-            'dataset_id'        => $dataset->id,
-            'filename'          => $filename,
-            'filename_original' => $formData['data-file']['name'],
-            'file_type'         => $formData['data-file']['type'],
-            'file_size'         => $formData['data-file']['size']
-        ];
-        $statement = $this->_adapter->createStatement($this->getQuery('insertFile'));
-        $statement->execute($parameters);
-        $id = $this->_adapter->getDriver()->getLastGeneratedValue();
-        return $id;
+        curl_setopt_array($ch, array(
+            CURLOPT_URL => $url,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_POSTFIELDS => array(
+                'title' => $formData['title'],
+                'description' => $formData['description'],
+                'file' => curl_file_create($localFile, $formData['data-file']['type'], $filename)
+            ),
+            CURLOPT_USERPWD => $username . ":" . $password,
+        ));
+        $response = curl_exec($ch);
+
+        curl_close($ch);
+        echo $response;
+
+        return true;
     }
 
-    public function findFile($id){
-        $parameters = [
-            'id' => $id
-        ];
-        $f = null;
-        $statement = $this->_adapter->createStatement($this->getQuery('findFile'));
-        $result = $statement->execute($parameters);
-        if ($result instanceof ResultInterface && $result->isQueryResult()) {
-            $f = $result->current();
-            $f['location'] = $this->_uploadDestination;
+    public function getFile($datasetID,$filename,$key) {
+        //$username = $this->_config['mkdf-stream']['user'];
+        //$password = $this->_config['mkdf-stream']['pass'];
+        $username = $key;
+        $password = $key;
+        $server = $this->_config['mkdf-stream']['server-url'];
+        //$parameters = array_merge(array('user' => $username,'pwd'=>$password), $parameters);
+        $path = '/file/' . $datasetID . '/' . rawurlencode($filename);
+        $url = $server . $path;
+        $curl = curl_init();
+
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => $url,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'GET',
+            CURLOPT_USERPWD => $username . ":" . $password,
+        ));
+
+        $response = curl_exec($curl);
+        $curlInfo = null;
+        if (!curl_errno($curl)) {
+            $curlInfo = curl_getinfo($curl);
         }
-        return $f;
+        curl_close($curl);
+        $data = [
+            'response' => $response,
+            'curlInfo' => $curlInfo
+        ];
+        return $data;
     }
 
-    public function deleteFile($id) {
-        //First get file entry details
-        $parameters = [
-            'id' => $id
+    public function deleteFile($datasetID,$filename,$key) {
+        $username = $key;
+        $password = $key;
+        $server = $this->_config['mkdf-stream']['server-url'];
+        //$parameters = array_merge(array('user' => $username,'pwd'=>$password), $parameters);
+        $path = '/file/' . $datasetID . '/' . rawurlencode($filename);
+        $url = $server . $path;
+        $curl = curl_init();
+
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => $url,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'DELETE',
+            CURLOPT_USERPWD => $username . ":" . $password,
+        ));
+
+        $response = curl_exec($curl);
+        //echo ($response);
+        $curlInfo = null;
+        if (!curl_errno($curl)) {
+            $curlInfo = curl_getinfo($curl);
+        }
+        curl_close($curl);
+        $data = [
+            'response' => $response,
+            'curlInfo' => $curlInfo
         ];
-        $f = null;
-        $statement = $this->_adapter->createStatement($this->getQuery('findFile'));
-        $result = $statement->execute($parameters);
-        if ($result instanceof ResultInterface && $result->isQueryResult()) {
-            $f = $result->current();
-            $f['location'] = $this->_uploadDestination;
+        return $data;
+    }
+
+    /**
+     * @param $method
+     * @param $path
+     * @param $parameters
+     * @return bool|string
+     * @throws \Exception
+     */
+    // FIXME - This is currently using admin credentials from config. For some operations, user keys should be supplied and used.
+    private function sendQuery($method, $path, $parameters) {
+        $username = $this->_config['mkdf-stream']['user'];
+        $password = $this->_config['mkdf-stream']['pass'];
+        $server = $this->_config['mkdf-stream']['server-url'];
+        //$parameters = array_merge(array('user' => $username,'pwd'=>$password), $parameters);
+        $url = $server . $path;
+        $ch = curl_init();
+
+        curl_setopt($ch, CURLOPT_USERPWD, $username . ":" . $password);
+
+        switch ($method){
+            case "PUT":
+                curl_setopt($ch, CURLOPT_URL, $url);
+                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "PUT");
+                curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($parameters));
+                break;
+            case "POST":
+                curl_setopt($ch, CURLOPT_URL, $url);
+                curl_setopt($ch, CURLOPT_POST, 1);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($parameters));
+                break;
+            case "GET":
+                curl_setopt($ch, CURLOPT_HTTPGET, 1);
+                $url = $url . '?' . http_build_query($parameters);
+                curl_setopt($ch, CURLOPT_URL, $url);
+                break;
+            default:
+                //unexpected method
+                throw new \Exception("Unexpected method");
         }
+        // receive server response ...
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
-        if ($f != null){
-            //database call to remove entry
-            $statement = $this->_adapter->createStatement($this->getQuery('deleteFile'));
-            $result = $statement->execute($parameters);
+        $server_output = curl_exec ($ch);
 
-
-            //file operation to remove file
-            $file_pointer = $f['location'] . $f['uuid'] . "/" . $f['filename'];
-
-            if (!unlink($file_pointer)) {
-                //FIXME - DELETION NOT WORKING
-                return false;
+        if (!curl_errno($ch)) {
+            switch ($http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE)) {
+                case 201:  # OK Created
+                    //self::log('Message from API Factory server: ',$server_output);
+                    //echo "201";
+                    break;
+                case 200:  # OK Updated
+                    //self::log('Message from API Factory server: ',$server_output);
+                    //echo "200";
+                    break;
+                default:
+                    throw new \Exception('Unexpected HTTP code: '. $http_code ."\n\nURL: ". $url . "\n\n" . $server_output);
+                //echo "Something else: ".$http_code;
             }
-            else {
-                return true;
-            }
-
+        }else{
+            //self::logErr('Curl Error: ', $curl_errno($ch));
+            throw new \Exception('cURL error: '. curl_error($ch) ."\n\nURL: ". $url . "\n\n" . $server_output);
         }
-        else {
-            return false;
-        }
-
+        curl_close ($ch);
+        return $server_output;
     }
 
     public function init(){
-      try {
-          $statement = $this->_adapter->createStatement($this->getQuery('isReady'));
-          $result    = $statement->execute();
-          return false;
-      } catch (\Exception $e) {
-          // XXX Maybe raise a warning here?
-      }
-      $sql = file_get_contents(dirname(__FILE__) . '/../../sql/setup.sql');
-      $this->_adapter->getDriver()->getConnection()->execute($sql);
       return true;
     }
 }
