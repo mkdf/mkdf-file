@@ -106,6 +106,7 @@ class FileController extends AbstractActionController
             $form = new FileForm($this->_repository);
             $request = $this->getRequest();
             if ($request->isPost()) {
+                $keyPassed = $request->getPost('key');
                 // Make certain to merge the $_FILES info!
                 $post = array_merge_recursive(
                     $request->getPost()->toArray(),
@@ -118,7 +119,7 @@ class FileController extends AbstractActionController
                     // Form is valid, save the form!
 
                     //Move file to correct location and create DB entry...
-                    $this->_repository->createFileEntry($data, $dataset->uuid);
+                    $this->_repository->createFileEntry($data, $dataset->uuid, $keyPassed);
 
                     $this->flashMessenger()->addSuccessMessage('File uploaded.');
                     return $this->redirect()->toRoute('file', ['action'=>'details', 'id' => $id]);
@@ -148,13 +149,14 @@ class FileController extends AbstractActionController
         $user_id = $this->currentUser()->getId();
         $datasetID =  $this->params()->fromRoute('id', 0);
         $filename = $this->params()->fromRoute('filename');
+        $keyPassed = $this->params()->fromQuery('key', null);
         $dataset = $this->_dataset_repository->findDataset($datasetID);
         $datasetUUID = $dataset->uuid;
         $actions = [];
         $can_read = $this->_permissionManager->canRead($dataset,$user_id);
         $userHasKey = $this->_keys_repository->userHasDatasetKey($user_id,$dataset->id);
         if ($can_read && $userHasKey) {
-            $response = $this->_repository->getFile($datasetUUID,$filename);
+            $response = $this->_repository->getFile($datasetUUID,$filename,$keyPassed);
             if ($response['response']) {
                 $vm = new ViewModel(['data' => $response['response']]);
                 $this->getResponse()->setStatusCode($response['curlInfo']['http_code']);
@@ -172,7 +174,7 @@ class FileController extends AbstractActionController
                 return $vm;
             }
             else {
-                //$response['response'] as false suggests no response from backend graph db
+                //$response['response'] as false suggests no response from backend
                 $this->getResponse()->setStatusCode(500);
                 return new JsonModel(['error' => 'No response from filestore']);
             }
@@ -189,6 +191,7 @@ class FileController extends AbstractActionController
         $filename = $this->params()->fromRoute('filename');
         $dataset = $this->_dataset_repository->findDataset($datasetID);
         $datasetUUID = $dataset->uuid;
+        $keyPassed = $this->params()->fromQuery('key', null);
         $user_id = $this->currentUser()->getId();
         $can_view = $this->_permissionManager->canView($dataset,$user_id);
         $can_read = $this->_permissionManager->canRead($dataset,$user_id);
@@ -200,7 +203,7 @@ class FileController extends AbstractActionController
             $container->delete_token = $token;
             $messages[] = [ 'type'=> 'warning', 'message' =>
                 'Are you sure you want to delete this file?'];
-            return new ViewModel(['filename' => $filename, 'dataset' => $dataset, 'token' => $token, 'messages' => $messages]);
+            return new ViewModel(['filename' => $filename, 'dataset' => $dataset, 'token' => $token, 'key' => $keyPassed, 'messages' => $messages]);
         }else{
             $this->flashMessenger()->addErrorMessage('Unauthorised to delete file.');
             return $this->redirect()->toRoute('file', ['action'=>'details', 'id' => $file['dataset_id']]);
@@ -211,6 +214,7 @@ class FileController extends AbstractActionController
         $datasetID =  $this->params()->fromRoute('id', 0);
         $filename = $this->params()->fromRoute('filename');
         $dataset = $this->_dataset_repository->findDataset($datasetID);
+        $keyPassed = $this->params()->fromQuery('key', null);
         $datasetUUID = $dataset->uuid;
         $token = $this->params()->fromQuery('token', '');
         $user_id = $this->currentUser()->getId();
@@ -225,7 +229,8 @@ class FileController extends AbstractActionController
         $container = new Container('File_Management');
         $valid_token = ($container->delete_token == $token);
         if($can_write && $valid_token){
-            $outcome = $this->_repository->deleteFile($filename);
+            $outcome = $this->_repository->deleteFile($datasetUUID, $filename, $keyPassed);
+            //print_r($outcome);
             unset($container->delete_token);
             $this->flashMessenger()->addSuccessMessage('The file was deleted successfully.');
             return $this->redirect()->toRoute('file', ['action'=>'details', 'id' => $dataset->id]);

@@ -11,7 +11,8 @@
             UUID: <?= $dataset->uuid ?><br />
             -->
 
-            <form id="sparqlForm">
+            <!---
+            <form id="keyForm">
                 <div class="row">
                     <div class="col-md-12"><label for="queryKey">Select a key to use for interacting with these files</label><br /></div>
                 </div>
@@ -28,6 +29,18 @@
                     </div>
                 </div>
             </form>
+            --->
+
+            <div class="row">
+                <div class="col-md-12">Using the following key for file interaction:<br /></div>
+            </div>
+            <div class="row">
+                <div class="form-group col-md-12">
+                    <em><?= $keys[0]['keyName'] ?> - <?= $keys[0]['keyUUID'] ?></em>
+                </div>
+            </div>
+
+
 
             <?php if ($can_view):?>
                 <table class="table table-bordered">
@@ -55,7 +68,7 @@
                                     $downloadFileAction = [
                                         'class'=>'btn-group-sm',
                                         'buttons'=>[
-                                            ['type'=>'primary','label'=>'', 'icon' => 'download', 'target'=> 'file', 'params'=> ['id' => $dataset->id, 'filename' => $f['filenameOriginal'], 'action' => 'download']],
+                                            ['type'=>'primary','label'=>'', 'icon' => 'download', 'target'=> 'file', 'params'=> ['id' => $dataset->id, 'filename' => $f['filenameOriginal'], 'action' => 'download'], 'query' => ['key' => $keys[0]['keyUUID']]],
                                         ]
                                     ];
                                     print($this->partial('mkdf/core/partial/actions', $downloadFileAction));
@@ -64,7 +77,7 @@
                                     $deleteFileAction = [
                                         'class'=>'btn-group-sm',
                                         'buttons'=>[
-                                            ['type'=>'danger','label'=>'', 'icon' => 'delete', 'target'=> 'file', 'params'=> ['id' => $dataset->id, 'filename' => $f['filenameOriginal'], 'action' => 'delete-confirm']],
+                                            ['type'=>'danger','label'=>'', 'icon' => 'delete', 'target'=> 'file', 'params'=> ['id' => $dataset->id, 'filename' => $f['filenameOriginal'], 'action' => 'delete-confirm'], 'query' => ['key' => $keys[0]['keyUUID']]],
                                         ]
                                     ];
                                     print($this->partial('mkdf/core/partial/actions', $deleteFileAction));
