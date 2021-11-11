@@ -68,7 +68,7 @@
                                     $downloadFileAction = [
                                         'class'=>'btn-group-sm',
                                         'buttons'=>[
-                                            ['type'=>'primary','label'=>'', 'icon' => 'download', 'target'=> 'file', 'params'=> ['id' => $dataset->id, 'filename' => $f['filenameOriginal'], 'action' => 'download'], 'query' => ['key' => $keys[0]['keyUUID']]],
+                                            ['type'=>'primary','label'=>'', 'icon' => 'download', 'target'=> 'file', 'params'=> ['id' => $dataset->id, 'filename' => rawurlencode($f['filenameOriginal']), 'action' => 'download'], 'query' => ['key' => $keys[0]['keyUUID']]],
                                         ]
                                     ];
                                     print($this->partial('mkdf/core/partial/actions', $downloadFileAction));
@@ -77,7 +77,7 @@
                                     $deleteFileAction = [
                                         'class'=>'btn-group-sm',
                                         'buttons'=>[
-                                            ['type'=>'danger','label'=>'', 'icon' => 'delete', 'target'=> 'file', 'params'=> ['id' => $dataset->id, 'filename' => $f['filenameOriginal'], 'action' => 'delete-confirm'], 'query' => ['key' => $keys[0]['keyUUID']]],
+                                            ['type'=>'danger','label'=>'', 'icon' => 'delete', 'target'=> 'file', 'params'=> ['id' => $dataset->id, 'filename' => rawurlencode($f['filenameOriginal']), 'action' => 'delete-confirm'], 'query' => ['key' => $keys[0]['keyUUID']]],
                                         ]
                                     ];
                                     print($this->partial('mkdf/core/partial/actions', $deleteFileAction));

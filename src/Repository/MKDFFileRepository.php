@@ -90,7 +90,7 @@ class MKDFFileRepository implements MKDFFileRepositoryInterface
         $password = $key;
         $server = $this->_config['mkdf-stream']['server-url'];
         //$parameters = array_merge(array('user' => $username,'pwd'=>$password), $parameters);
-        $path = '/file/' . $datasetID . '/' . $filename;
+        $path = '/file/' . $datasetID . '/' . rawurlencode($filename);
         $url = $server . $path;
         $curl = curl_init();
 
@@ -124,7 +124,7 @@ class MKDFFileRepository implements MKDFFileRepositoryInterface
         $password = $key;
         $server = $this->_config['mkdf-stream']['server-url'];
         //$parameters = array_merge(array('user' => $username,'pwd'=>$password), $parameters);
-        $path = '/file/' . $datasetID . '/' . $filename;
+        $path = '/file/' . $datasetID . '/' . rawurlencode($filename);
         $url = $server . $path;
         $curl = curl_init();
 

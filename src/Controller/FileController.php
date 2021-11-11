@@ -53,7 +53,7 @@ class FileController extends AbstractActionController
 
                     'type' => 'primary',
                     'label' => 'Upload new file',
-                    'icon' => 'upload',
+                    'icon' => 'create',
                     'target' => 'file',
                     'params' => [
                         'action' => 'upload',
@@ -147,7 +147,7 @@ class FileController extends AbstractActionController
     public function downloadAction() {
         $user_id = $this->currentUser()->getId();
         $datasetID =  $this->params()->fromRoute('id', 0);
-        $filename = $this->params()->fromRoute('filename');
+        $filename = rawurldecode($this->params()->fromRoute('filename'));
         $keyPassed = $this->params()->fromQuery('key', null);
         $dataset = $this->_dataset_repository->findDataset($datasetID);
         $datasetUUID = $dataset->uuid;
@@ -187,7 +187,7 @@ class FileController extends AbstractActionController
     public function deleteConfirmAction() {
         //
         $datasetID =  $this->params()->fromRoute('id', 0);
-        $filename = $this->params()->fromRoute('filename');
+        $filename = rawurldecode($this->params()->fromRoute('filename'));
         $dataset = $this->_dataset_repository->findDataset($datasetID);
         $datasetUUID = $dataset->uuid;
         $keyPassed = $this->params()->fromQuery('key', null);
