@@ -6,6 +6,7 @@
         </div>
         <div class="col-md-9">
             <h2>Dataset files</h2>
+            <?= $this->partial('mkdf/core/partial/messages', ['messages' => $messages] ) ?>
             <?= $this->partial('mkdf/core/partial/actions', $actions); ?>
             <!--
             UUID: <?= $dataset->uuid ?><br />

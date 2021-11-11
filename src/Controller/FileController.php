@@ -9,6 +9,7 @@ use MKDF\Stream\Repository\MKDFStreamRepositoryInterface;
 use Zend\Mvc\Controller\AbstractActionController;
 use Zend\Session\Container;
 use Zend\View\Model\ViewModel;
+use Zend\Mvc\Plugin\FlashMessenger;
 
 class FileController extends AbstractActionController
 {
@@ -28,11 +29,22 @@ class FileController extends AbstractActionController
     }
 
     public function detailsAction() {
+        $messages = [];
+        $flashMessenger = $this->flashMessenger();
+        if ($flashMessenger->hasMessages()) {
+            foreach($flashMessenger->getMessages() as $flashMessage) {
+                $messages[] = [
+                    'type' => 'warning',
+                    'message' => $flashMessage
+                ];
+            }
+        }
         $user_id = $this->currentUser()->getId();
         $id = (int) $this->params()->fromRoute('id', 0);
         $dataset = $this->_dataset_repository->findDataset($id);
         $message = "Dataset: " . $id;
         $actions = [];
+
         $can_view = $this->_permissionManager->canView($dataset,$user_id);
         $can_read = $this->_permissionManager->canRead($dataset,$user_id);
         $can_edit = $this->_permissionManager->canEdit($dataset,$user_id);
@@ -70,6 +82,7 @@ class FileController extends AbstractActionController
             $keys = $this->_keys_repository->userDatasetKeys($user_id,$dataset->id);
             return new ViewModel([
                 'message' => $message,
+                'messages' => $messages,
                 'dataset' => $dataset,
                 'files'   => $files,
                 'keys' => $keys,
@@ -83,7 +96,7 @@ class FileController extends AbstractActionController
             ]);
         }
         else{
-            $this->flashMessenger()->addErrorMessage('Unauthorised to view dataset.');
+            $this->flashMessenger()->addMessage('Unauthorised to view dataset.');
             return $this->redirect()->toRoute('dataset', ['action'=>'index']);
         }
     }
@@ -99,7 +112,7 @@ class FileController extends AbstractActionController
         $can_edit = $this->_permissionManager->canEdit($dataset,$user_id);
         $can_write = $this->_permissionManager->canWrite($dataset,$user_id);
         $userHasKey = $this->_keys_repository->userHasDatasetKey($user_id,$dataset->id);
-
+        $messages = [];
         if ($can_write && $userHasKey) {
             $keys = $this->_keys_repository->userDatasetKeys($user_id,$dataset->id);
             $form = new FileForm($this->_repository);
@@ -117,16 +130,16 @@ class FileController extends AbstractActionController
                     $data = $form->getData();
                     // Form is valid, save the form!
 
-                    //Move file to correct location and create DB entry...
+                    //Pass file to repository for upload
                     $this->_repository->createFileEntry($data, $dataset->uuid, $keyPassed);
 
-                    $this->flashMessenger()->addSuccessMessage('File uploaded.');
+                    $this->flashMessenger()->addMessage('File uploaded.');
                     return $this->redirect()->toRoute('file', ['action'=>'details', 'id' => $id]);
                 }
                 else {
-                    $this->flashMessenger()->addErrorMessage('Form submission invalid.');
+                    $this->flashMessenger()->addMessage('Form submission invalid.');
                     if ($_FILES['data-file']['error'] != 0) {
-                        $this->flashMessenger()->addErrorMessage('Uploaded file missing or too large.');
+                        $this->flashMessenger()->addMessage('Uploaded file missing or too large.');
                     }
                 }
             }
@@ -135,11 +148,11 @@ class FileController extends AbstractActionController
                 'form' => $form,
                 'dataset' => $dataset,
                 'keys' => $keys,
-                'features' => $this->datasetsFeatureManager()->getFeatures($id),
+                'features' => $this->datasetsFeatureManager()->getFeatures($id)
             ]);
         }
         else{
-            $this->flashMessenger()->addErrorMessage('Unauthorised to write to dataset.');
+            $this->flashMessenger()->addMessage('Unauthorised to write to dataset.');
             return $this->redirect()->toRoute('file', ['action'=>'details', 'id' => $id]);
         }
     }
@@ -179,7 +192,7 @@ class FileController extends AbstractActionController
             }
         }
         else {
-            $this->flashMessenger()->addErrorMessage('Unauthorised to read files from this dataset.');
+            $this->flashMessenger()->addMessage('Unauthorised to read files from this dataset.');
             return $this->redirect()->toRoute('file', ['action'=>'details', 'id' => $file['dataset_id']]);
         }
     }
@@ -204,7 +217,7 @@ class FileController extends AbstractActionController
                 'Are you sure you want to delete this file?'];
             return new ViewModel(['filename' => $filename, 'dataset' => $dataset, 'token' => $token, 'key' => $keyPassed, 'messages' => $messages]);
         }else{
-            $this->flashMessenger()->addErrorMessage('Unauthorised to delete file.');
+            $this->flashMessenger()->addMessage('Unauthorised to delete file.');
             return $this->redirect()->toRoute('file', ['action'=>'details', 'id' => $file['dataset_id']]);
         }
     }
@@ -231,10 +244,10 @@ class FileController extends AbstractActionController
             $outcome = $this->_repository->deleteFile($datasetUUID, $filename, $keyPassed);
             //print_r($outcome);
             unset($container->delete_token);
-            $this->flashMessenger()->addSuccessMessage('The file was deleted successfully.');
+            $this->flashMessenger()->addMessage('The file was deleted successfully.');
             return $this->redirect()->toRoute('file', ['action'=>'details', 'id' => $dataset->id]);
         }else{
-            $this->flashMessenger()->addErrorMessage('Unauthorised. Delete token was ' . (($valid_token)?'valid':'invalid') . '.');
+            $this->flashMessenger()->addMessage('Unauthorised. Delete token was ' . (($valid_token)?'valid':'invalid') . '.');
             return $this->redirect()->toRoute('file', ['action'=>'details', 'id' => $file['dataset_id']]);
         }
     }
