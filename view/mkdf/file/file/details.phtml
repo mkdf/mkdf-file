@@ -60,12 +60,32 @@
                         <tr>
                             <td><?= $this->escapeHtml($f['title']) ?></td>
                             <td><?= $this->escapeHtml($f['description']) ?></td>
-                            <td><?= $this->escapeHtml($f['filenameOriginal']) ?></td>
+                            <td>
+                                <?= $this->escapeHtml($f['filenameOriginal']) ?>
+                            </td>
                             <td><?= $this->escapeHtml($f['type']) ?></td>
                             <td><?= $this->escapeHtml($f['sizeStr']) ?></td>
                             <td class="text-nowrap">
                                 <?php
                                 if ($can_read) {
+                                    ?>
+                                <div class="btn-group btn-group-sm" role="group" aria-label="">
+                                    <button type="button"
+                                            class="btn btn-info"
+                                            data-bs-toggle="tooltip"
+                                            data-bs-html="true"
+                                            title="Copy the URI"
+                                            onclick="copyLink('<?= $f['uri'] ?>');">
+                                        <i class="fas fa-link"></i>
+                                    </button>
+                                    <!--
+                                    <a
+                                            class="btn btn-primary"
+                                            href="<?= $this->escapeHtml($f['uri']) ?>"
+                                    ><i class="fas fa-link"></i></a>
+                                    -->
+                                </div>
+                                    <?php
                                     $downloadFileAction = [
                                         'class'=>'btn-group-sm',
                                         'buttons'=>[
@@ -87,6 +107,13 @@
                                 ?>
                             </td>
                         </tr>
+                    <!--
+                        <tr>
+                            <td colspan="6">
+                                <?= $this->escapeHtml($f['uri']) ?>
+                            </td>
+                        </tr>
+                    -->
                     <?php endforeach; ?>
 
                 </table>
@@ -95,3 +122,12 @@
         </div>
     </div>
 </div>
+<script>
+    function copyLink(copyText) {
+        /* Copy the text
+        navigator.clipboard.writeText(copyText);
+
+        /* Alert the copied text */
+        alert("Image URI copied to clipboard: \n" + copyText);
+    }
+</script>

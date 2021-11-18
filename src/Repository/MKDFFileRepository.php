@@ -34,6 +34,13 @@ class MKDFFileRepository implements MKDFFileRepositoryInterface
         return round(pow(1024, $base - floor($base)), $precision) .''. $suffixes[floor($base)];
     }
 
+    public function getFileURI($datasetID, $filename) {
+        $server = $this->_config['mkdf-stream']['server-url'];
+        $path = '/file/' . $datasetID . '/' . rawurlencode($filename);
+        $url = $server . $path;
+        return $url;
+    }
+
     public function findDatasetFiles ($datasetId) {
         $files = [];
         // FIXME - use correct user access key here for getting file list
@@ -42,6 +49,7 @@ class MKDFFileRepository implements MKDFFileRepositoryInterface
         $files = json_decode($repsonse,true);
         foreach ($files as $key=>$value) {
             $files[$key]['sizeStr'] = $this->_formatBytes($value['size']);
+            $files[$key]['uri'] = $this->getFileURI($datasetId, $value['filenameOriginal']);
         }
         return $files;
     }
