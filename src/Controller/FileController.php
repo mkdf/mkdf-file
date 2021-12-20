@@ -78,8 +78,8 @@ class FileController extends AbstractActionController
         if ($can_view && $can_read && $userHasKey) {
             $dataset = $this->_dataset_repository->findDataset($id);
             $uuid = $dataset->uuid;
-            $files = $this->_repository->findDatasetFiles($uuid);
             $keys = $this->_keys_repository->userDatasetKeys($user_id,$dataset->id);
+            $files = $this->_repository->findDatasetFiles($uuid, $keys[0]['keyUUID']);
             return new ViewModel([
                 'message' => $message,
                 'messages' => $messages,

@@ -41,11 +41,9 @@ class MKDFFileRepository implements MKDFFileRepositoryInterface
         return $url;
     }
 
-    public function findDatasetFiles ($datasetId) {
+    public function findDatasetFiles ($datasetId, $accessKey) {
         $files = [];
-        // FIXME - use correct user access key here for getting file list
-        $repsonse = $this->sendQuery('GET','/file/' . $datasetId, array());
-        //echo ($repsonse);
+        $repsonse = $this->sendQuery('GET','/file/' . $datasetId, $accessKey, array());
         $files = json_decode($repsonse,true);
         foreach ($files as $key=>$value) {
             $files[$key]['sizeStr'] = $this->_formatBytes($value['size']);
@@ -169,10 +167,12 @@ class MKDFFileRepository implements MKDFFileRepositoryInterface
      * @return bool|string
      * @throws \Exception
      */
-    // FIXME - This is currently using admin credentials from config. For some operations, user keys should be supplied and used.
-    private function sendQuery($method, $path, $parameters) {
-        $username = $this->_config['mkdf-stream']['user'];
-        $password = $this->_config['mkdf-stream']['pass'];
+    private function sendQuery($method, $path, $accessKey, $parameters) {
+        // $username = $this->_config['mkdf-stream']['user'];
+        // $password = $this->_config['mkdf-stream']['pass'];
+        $username = $accessKey;
+        $password = $accessKey;
+
         $server = $this->_config['mkdf-stream']['server-url'];
         //$parameters = array_merge(array('user' => $username,'pwd'=>$password), $parameters);
         $url = $server . $path;
