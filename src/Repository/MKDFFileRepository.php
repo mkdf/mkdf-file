@@ -84,7 +84,7 @@ class MKDFFileRepository implements MKDFFileRepositoryInterface
         $response = curl_exec($ch);
 
         curl_close($ch);
-        echo $response;
+        //echo $response;
 
         return true;
     }
