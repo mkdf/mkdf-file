@@ -79,13 +79,29 @@ class FileController extends AbstractActionController
             $dataset = $this->_dataset_repository->findDataset($id);
             $uuid = $dataset->uuid;
             $keys = $this->_keys_repository->userDatasetKeys($user_id,$dataset->id);
-            $files = $this->_repository->findDatasetFiles($uuid, $keys[0]['keyUUID']);
+            //print_r($keys);
+            // Loop through available keys here to find one that has read access, before using it to retrieve files.
+            $keyToUse = null;
+            $files = null;
+            foreach ($keys as $key) {
+                if ((($key['permission'] == 'a') || ($key['permission'] == 'r')) && is_null($keyToUse)) {
+                    $keyToUse = $key;
+                }
+            }
+            if (!is_null($keyToUse)) {
+                $files = $this->_repository->findDatasetFiles($uuid, $keyToUse['keyUUID']);
+            }
+            else {
+                $this->flashMessenger()->addMessage('No valid keys are available for reading the file contents of this dataset');
+                return $this->redirect()->toRoute('dataset', ['action'=>'details', 'id' => $id]);
+            }
             return new ViewModel([
                 'message' => $message,
                 'messages' => $messages,
                 'dataset' => $dataset,
                 'files'   => $files,
                 'keys' => $keys,
+                'key_used' => $keyToUse,
                 'features' => $this->datasetsFeatureManager()->getFeatures($id),
                 'actions' => $actions,
                 'can_edit' => $can_edit,
@@ -97,7 +113,7 @@ class FileController extends AbstractActionController
         }
         else{
             $this->flashMessenger()->addMessage('Unauthorised to view dataset.');
-            return $this->redirect()->toRoute('dataset', ['action'=>'index']);
+            return $this->redirect()->toRoute('dataset', ['action'=>'details', 'id' => $id]);
         }
     }
 
